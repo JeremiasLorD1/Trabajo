@@ -27,10 +27,13 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.Iterator;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 
 /**
  * 
@@ -192,6 +195,10 @@ public class Principal extends javax.swing.JFrame {
         jSumaPresupuestosExp = new javax.swing.JLabel();
         jLabel20 = new javax.swing.JLabel();
         jCantidadEquipos = new javax.swing.JLabel();
+        jLabel1 = new javax.swing.JLabel();
+        jLabelResultadoMayor = new javax.swing.JLabel();
+        jLabel12 = new javax.swing.JLabel();
+        jLabelResultadoMenor = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -534,6 +541,14 @@ public class Principal extends javax.swing.JFrame {
         jCantidadEquipos.setText("info");
         jPanelInformacion.add(jCantidadEquipos, new org.netbeans.lib.awtextra.AbsoluteConstraints(160, 130, 500, -1));
 
+        jLabel1.setText("El proyecto de mayor duracion es: ");
+        jPanelInformacion.add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 160, 190, -1));
+        jPanelInformacion.add(jLabelResultadoMayor, new org.netbeans.lib.awtextra.AbsoluteConstraints(230, 160, 150, 20));
+
+        jLabel12.setText("El proyecto de menor duracion es: ");
+        jPanelInformacion.add(jLabel12, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 200, -1, -1));
+        jPanelInformacion.add(jLabelResultadoMenor, new org.netbeans.lib.awtextra.AbsoluteConstraints(230, 200, 150, 20));
+
         contenedor.add(jPanelInformacion, "card4");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -708,11 +723,7 @@ public class Principal extends javax.swing.JFrame {
 
         // Experimento mas largo
         int auxFecha = 0;
-//        for (Experimento e : listaExperimentosBioFis) {
-//            auxFecha = (int) (e.getFin().getTime() - e.getInicio().getTime());
-//        }
-//        System.out.println(auxFecha);
-        // Experimento mas corto
+//        
 
         // El equipo mas utilizado
         int mayor = 0;
@@ -732,6 +743,47 @@ public class Principal extends javax.swing.JFrame {
         } else {
             jCantidadEquipos.setText("No hay equipos usados");
         }
+        //Determinar el experimento de menor y mayor duracion....        
+        Experimento eMayor=listaExperimentosBioFis.get(0);
+        Experimento eMenor=listaExperimentosBioFis.get(0);
+        //String menor=listaExperimentosBioFis.get(0).getTitulo();
+         // Crear un objeto SimpleDateFormat para formatear fechas ya que getInicio devuelve un string
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        LocalDate iniMayor=null;
+        LocalDate finMayor=null;
+        LocalDate iniOtro=null;
+        LocalDate finOtro=null;
+        long duracionOtro=0;
+        long duracionMayor=0;  
+        long duracionMenor=0;
+        for(Experimento e:listaExperimentosBioFis){
+            //casteos de date a LocalDate para poder usar la funcion que calcula dias entre dos fechas dadas(Ya que ChronoUnit solo recibe objetos temporales como LocalDate)
+            iniMayor=LocalDate.parse(eMayor.getInicio(),dtf);            
+            finMayor=LocalDate.parse(eMayor.getFin(), dtf);
+            iniOtro=LocalDate.parse(e.getInicio(),dtf);
+            finOtro=LocalDate.parse(e.getFin(),dtf);
+            System.out.println(iniMayor);
+            System.out.println(finMayor);
+            duracionMayor=ChronoUnit.DAYS.between(iniMayor, finMayor);
+            duracionOtro=ChronoUnit.DAYS.between(iniOtro, finOtro);            
+            if(duracionMayor<duracionOtro){
+                eMayor=e;  
+            }
+            if(duracionMayor>duracionOtro){
+                eMenor=e;
+            }                                            
+        }        
+            //Las 3 lineas siguientes se hacen para asegurarse que se actualice el valor "duracionMayor" ya que daba problemas si el de mayor duracion era el ultimo elemento.
+          iniMayor=LocalDate.parse(eMayor.getInicio(),dtf);
+          finMayor=LocalDate.parse(eMayor.getFin(), dtf);
+          duracionMayor=ChronoUnit.DAYS.between(iniMayor, finMayor);              
+          jLabelResultadoMayor.setText(eMayor.getTitulo()+" con " +duracionMayor+ " dias");
+          iniMayor=LocalDate.parse(eMenor.getInicio(),dtf);
+          finMayor=LocalDate.parse(eMenor.getFin(), dtf);
+          duracionMenor=ChronoUnit.DAYS.between(iniMayor, finMayor);
+          System.out.println("Duracion menor2: "+duracionMenor);
+          jLabelResultadoMenor.setText(eMenor.getTitulo()+" con " +duracionMenor+ " dias");
+      
 
     }//GEN-LAST:event_jBtnInformacionActionPerformed
 
@@ -997,7 +1049,7 @@ public class Principal extends javax.swing.JFrame {
         // Fecha fin
         Date expFechaFinValue = jDaChFechaFinModifica.getDate();
         LocalDate localDate2 = expFechaFinValue.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-        String expFechaFinValue1 = localDate.toString();
+        String expFechaFinValue1 = localDate2.toString();
 
         if (jDaChFechaFinModifica.getDate() == null) {
             JOptionPane.showMessageDialog(null, "Error: Ingresa un valor de fecha válido.");
@@ -1401,19 +1453,35 @@ public class Principal extends javax.swing.JFrame {
             return;
             // Manejar el caso en que las fechas sean nulas, por ejemplo, mostrar un mensaje de error
         }
-         LocalDate localExpFechaInicio=expFechaInicioValue.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        LocalDate localExpFechaInicio=expFechaInicioValue.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
         LocalDate localExpFechaFin=expFechaFinValue.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
         if(localExpFechaFin.isBefore(localExpFechaInicio)||localExpFechaInicio.isAfter(localExpFechaFin)){
             JOptionPane.showMessageDialog(null, "Error: La fecha de Inicio No puede ser posterior a la fecha de fin.");
             return;
         }
         LocalDate localDate1 = expFechaFinValue.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-        String expFechaFinValue1 = localDate.toString();
+        String expFechaFinValue1 = localDate1.toString();
 
         // Presupuesto
         float expPresupuestoFloat;
         try {
             expPresupuestoFloat = Float.parseFloat(txtPresupuesto.getText().trim());
+            // Ahora tienes el valor en formato float
+            // Lo que hacemos con el try es ver que sea un numero si no lansa la exepcion. Para que no se rompa el programa y lo atrapamos con
+            //el catch.
+        } catch (NumberFormatException e) {
+            // Maneja aquí la excepción si la entrada no es un float válido
+            JOptionPane.showMessageDialog(null, "Error: Ingresa un valor float válido.");
+            return;
+        }
+         // Presupuesto
+        
+        try {
+            expPresupuestoFloat = Float.parseFloat(txtPresupuesto.getText().trim());
+            if(expPresupuestoFloat<0){
+                 JOptionPane.showMessageDialog(null, "Error: Ingresa un presupuesto válido.(No puede ser negativo...)");
+            return;
+            }
             // Ahora tienes el valor en formato float
             // Lo que hacemos con el try es ver que sea un numero si no lansa la exepcion. Para que no se rompa el programa y lo atrapamos con
             //el catch.
@@ -1603,7 +1671,9 @@ public class Principal extends javax.swing.JFrame {
     private com.toedter.calendar.JDateChooser jDaChFechaInicioModifica;
     private com.toedter.calendar.JDateChooser jDaChInicioCientificos;
     private com.toedter.calendar.JDateChooser jDaChInicioCientificos1;
+    private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel11;
+    private javax.swing.JLabel jLabel12;
     private javax.swing.JLabel jLabel13;
     private javax.swing.JLabel jLabel14;
     private javax.swing.JLabel jLabel15;
@@ -1627,6 +1697,8 @@ public class Principal extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
+    private javax.swing.JLabel jLabelResultadoMayor;
+    private javax.swing.JLabel jLabelResultadoMenor;
     private javax.swing.JList<String> jListCientificoModifica;
     private javax.swing.JList<String> jListCientificos;
     private javax.swing.JList<String> jListEquipoModifica;
